@@ -18,7 +18,7 @@ class Speaker {
     this.isPoweredOn = true;
   }
 
-  getVolume(callback) {
+  getSystemVolume(callback) {
     exec(`amixer get Master | awk '$0~/%/{print $4}' | tr -d '[]%'`, (error, stdout, stderr) => {
       this.volume = stdout.split('\n')[0];
       callback(this.volume);
@@ -67,7 +67,7 @@ class Speaker {
     this.service
       .addCharacteristic(Characteristic.Volume)
       .on('get', callback => {
-        this.getVolume(volume => {
+        this.getSystemVolume(volume => {
           callback(null, volume);
         });    
       })
@@ -78,7 +78,7 @@ class Speaker {
         });    
       });
 
-    this.getVolume(volume => this.service.setCharacteristic(Characteristic.Volume, volume));
+    this.getSystemVolume(volume => this.service.setCharacteristic(Characteristic.Volume, volume));
 
     return [informationService, speakerService];
   }
