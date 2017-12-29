@@ -71,7 +71,7 @@ class Speaker {
           callback(null, volume);
         });    
       })
-      .on('set', () => {
+      .on('set', (volume, callback) => {
         exec(`amixer set  Master ${volume}%`, (error, stdout, stderr) => {
           this.volume = volume;
           callback(undefined);
