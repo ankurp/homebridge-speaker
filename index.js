@@ -80,6 +80,6 @@ class Speaker {
 
     this.getSystemVolume(volume => this.service.setCharacteristic(Characteristic.Volume, volume));
 
-    return [informationService, speakerService];
+    return [informationService, this.service];
   }
 };
