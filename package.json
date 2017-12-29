@@ -1,0 +1,22 @@
+{
+  "name": "homebridge-speaker",
+  "version": "1.0.0",
+  "license": "ISC",
+  "description": "Homebridge plugin to control a speaker device",
+  "keywords": [
+    "homebridge-plugin"
+  ],
+  "engines": {
+    "node": ">=6.12.2",
+    "homebridge": ">=0.2.0"
+  },
+  "author": {
+    "name": "Ankur Pate <ankur@encoredevlabs.com>"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com/ankurp/homebridge-speaker.git"
+  },
+  "dependencies": {
+  }
+}
