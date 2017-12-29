@@ -4,7 +4,7 @@ let Service, Characteristic;
 module.exports = function (homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
-  homebridge.registerAccessory('homebridge-speaker', 'Homebridge-Speaker', Speaker);
+  homebridge.registerAccessory('homebridge-speaker', 'Speaker', Speaker);
 };
 
 class Speaker {
@@ -15,7 +15,7 @@ class Speaker {
 
     this.volume = 50;
     this.isMuted = false;
-    this.getVolume(volume => this.service.setCharacteristic(Characteristic.Volume, volume));
+    this.isPoweredOn = true;
   }
 
   getVolume(callback) {
@@ -31,48 +31,55 @@ class Speaker {
   }
 
   getServices() {
-    const speakerService = new Service.Speaker(this.name);
+    const informationService = new Service.AccessoryInformation();
 
-    speakerService
+    informationService
+      .setCharacteristic(Characteristic.Manufacturer, 'Encore Dev Labs')
+      .setCharacteristic(Characteristic.Model, 'Voicekit')
+      .setCharacteristic(Characteristic.SerialNumber, 'Raspberry Pi 3');
+
+    this.service = new Service.Speaker(this.name);
+
+    this.service
+      .addCharacteristic(Characteristic.On)
+      .on('get', callback => callback(null, this.isPoweredOn))
+      .on('set', (value, callback) => {
+        this.isPoweredOn = value;
+        callback(null);
+      });
+
+    this.service
       .getCharacteristic(Characteristic.Mute)
-      .on('get', this.getMuteState.bind(this))
-      .on('set', this.setMuteState.bind(this));
-
-    speakerService
-      .addCharacteristic(new Characteristic.Volume())
-      .on('get', this.getVolume.bind(this))
-      .on('set', this.setVolume.bind(this));
-
-    return [speakerService];
-  }
-
-  getMuteState(callback) {
-    callback(null, this.isMuted === false);
-  }
-
-  setMuteState(isMuted, callback) {
-    this.isMuted = isMuted;
-    if (this.isMuted) {
-      exec('amixer set  Master 0', (error, stdout, stderr) => {
-        callback(null);
+      .on('get', callback => callback(null, this.isMuted === false))
+      .on('set', (value, callback) => {
+        this.isMuted = value;
+        if (this.isMuted) {
+          exec('amixer set  Master 0', (error, stdout, stderr) => {
+            callback(null);
+          });
+        } else {
+          exec(`amixer set Master ${this.volume}%`, (error, stdout, stderr) => {
+            callback(null);
+          });
+        }
       });
-    } else {
-      exec(`amixer set Master ${this.volume}%`, (error, stdout, stderr) => {
-        callback(null);
+
+    this.service
+      .addCharacteristic(Characteristic.Volume)
+      .on('get', callback => {
+        this.getVolume(volume => {
+          callback(null, volume);
+        });    
+      })
+      .on('set', () => {
+        exec(`amixer set  Master ${volume}%`, (error, stdout, stderr) => {
+          this.volume = volume;
+          callback(undefined);
+        });    
       });
-    }
-  }
 
-  getVolume(callback) {
-    this.getVolume(volume => {
-      callback(null, volume);
-    });
-  }
+    this.getVolume(volume => this.service.setCharacteristic(Characteristic.Volume, volume));
 
-  setVolume(volume, callback) {
-    exec(`amixer set  Master ${volume}%`, (error, stdout, stderr) => {
-      this.volume = volume;
-      callback(undefined);
-    });
+    return [informationService, speakerService];
   }
 };
